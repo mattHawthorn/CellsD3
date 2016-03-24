@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!--import D3-->
+    <script type="text/javascript" src="/home/matt/Git/d3/d3.min.js"></script>
+
+    <script type="text/javascript">
+        //<![CDATA[
+        // Global formatting variables
+        var width = 1000;
+        var height = 1000;
+        var n = 250;
+        var states = 2;
+        var neighbors = 2;
+        var cell_width = width/n;
+        var lambda = 3.9;
+        
+        function random_state(len){
+            state = new Array(len);
+            for(var i=0; i<state.length; i++){
+                state[i] = Math.random();
+            }
+            return state;
+        }
+        
+        function get_state(state){
+            //console.log(state);
+            new_state = new Array(state.length);
+            
+            indices = new Array(2*neighbors+1);
+            indices[0] = -1*neighbors-1;
+            for(var i = 1; i<indices.length; i++){
+                indices[i] = indices[i-1]+1;
+            }
+            neighborhood = indices.map(x => state[(x+n)%n]);
+            var j=neighbors-1;
+            for(var i=0; i<n-neighbors; i++){
+                neighborhood.shift();
+                j = j+1;
+                neighborhood.push(state[j]);
+                new_state[i] = transition(neighborhood,state[i]);
+                //console.log(neighborhood);
+                }
+            //console.log("");
+            j = -1;
+            for(var i=n-neighbors; i<n; i++){
+                neighborhood.shift();
+                //console.log(j);
+                j = j+1;
+                //console.log(j);
+                neighborhood.push(state[j]);
+                new_state[i] = transition(neighborhood,state[i]);
+                //console.log(neighborhood);
+                }
+            return new_state;
+        }
+        
+        function transition(neighborhood,x){
+            m = neighborhood.reduce((a,b) => a+b);
+            m = m/neighborhood.length;
+            return lambda*m*(1-m);
+        }
+        
+        function draw_state(state,t,cell_width){
+            cells = d3.select("#cells");
+            for(var i=0; i<state.length; i++){
+                //console.log(state[i]);
+                cells.append("rect")
+                    .attr("x",i*cell_width)
+                    .attr("y",t*cell_width)
+                    .attr("width",cell_width)
+                    .attr("height",cell_width)
+                    .style("fill","black")
+                    .style("opacity",state[i]);
+            }
+            
+        }
+        
+        function draw(){
+            svg = d3.select("#cells").attr("width",width).attr("height",height);
+            svg.selectAll("*").remove();
+            var cell_width = width/n;
+            console.log(cell_width);
+            l = d3.select("#lambda").text(parseFloat(lambda))
+            
+            state = random_state(n);
+            
+            for(var t=0; t<n; t++){
+                new_state = get_state(state);
+                draw_state(new_state,t,cell_width);
+                state = new_state;
+            }
+        }
+        
+        //]]>
+    </script>
+
+    
+</head>
+<body onload="draw()">
+    
+    <p>
+    <!-- define the svg, with default font for all text objects and default stroke for the squares. -->
+    <svg id="cells">
+        <defs><!--<![CDATA[ -->
+            <style type="text/css">
+
+            </style>
+        <!--]]> --></defs>
+    </svg>
+    </p>
+    
+    <p id="lambda">
+    </p>
+    
+    <p>
+    <button onclick="lambda=Math.round(1000*(lambda+0.05))/1000; draw()">lambda+=.05</button>
+    <button onclick="lambda=Math.round(1000*(lambda-0.05))/1000; draw()">lambda-=0.05</button>
+    </p>
+    
+    <p>
+    <button onclick="n = n+10; draw()">n+=10</button>
+    <button onclick="n = n-10; draw()">n-=10</button>
+    </p>
+
+    <p>
+    <button onclick="neighbors = neighbors+1; draw()">neighbors+=1</button>
+    <button onclick="neighbors = neighbors-1; draw()">neighbors-=1</button>
+    </p>
+
+</body>
+</html>
